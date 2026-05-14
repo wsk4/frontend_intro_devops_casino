@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
     <header class="barra">
-      <a routerLink="/lobby" class="marca">♠ Casino DevOps ♦</a>
+      <a routerLink="/lobby" class="marca">♠ Casino Vidal ♦</a>
 
       <nav *ngIf="auth.autenticado()">
         <a routerLink="/lobby"     routerLinkActive="activo">Lobby</a>
@@ -106,8 +106,8 @@ export class HeaderComponent implements OnDestroy {
 
     effect(() => {
       const saldo = Number(this.auth.usuario()?.saldo ?? 0);
-      const prev  = this.displaySaldo.val;
-      const dur   = Math.min(0.8, Math.max(0.3, Math.abs(saldo - prev) / 5000));
+      const prev = this.displaySaldo.val;
+      const dur = Math.min(0.8, Math.max(0.3, Math.abs(saldo - prev) / 5000));
 
       this.tween?.kill();
       this.tween = ngZone.runOutsideAngular(() =>
