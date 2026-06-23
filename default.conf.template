@@ -1,12 +1,13 @@
 server {
-    listen 80;
+    listen 8080;
     server_name _;
 
     root /usr/share/nginx/html;
     index index.html;
 
-    location /api/ {
-        proxy_pass         http://${BACKEND_HOST}:3000/api/;
+    # ── casino-backend :3000 ──────────────────────────────────────────────
+    location /api/auth/ {
+        proxy_pass         http://casino-backend:3000/api/auth/;
         proxy_http_version 1.1;
         proxy_set_header   Host              $host;
         proxy_set_header   X-Real-IP         $remote_addr;
@@ -14,10 +15,71 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
 
-    location /health {
-        proxy_pass http://${BACKEND_HOST}:3000/health;
+    location /api/usuarios/ {
+        proxy_pass         http://casino-backend:3000/api/usuarios/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
     }
 
+    location /api/juegos/ {
+        proxy_pass         http://casino-backend:3000/api/juegos/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    location /api/transacciones/ {
+        proxy_pass         http://casino-backend:3000/api/transacciones/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # ── bonos-service :8004 ───────────────────────────────────────────────
+    location /api/bonos/ {
+        proxy_pass         http://bonos-service:8004/api/bonos/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # ── apuestas-service :8005 ────────────────────────────────────────────
+    location /api/apuestas/ {
+        proxy_pass         http://apuestas-service:8005/api/apuestas/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # ── estadisticas-service :8006 ────────────────────────────────────────
+    location /api/estadisticas/ {
+        proxy_pass         http://estadisticas-service:8006/api/estadisticas/;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # ── Liveness probe del propio nginx ───────────────────────────────────
+    location /livez {
+        access_log off;
+        return 200 '{"status":"ok"}';
+        add_header Content-Type application/json;
+    }
+
+    # ── SPA fallback Angular router ───────────────────────────────────────
     location / {
         try_files $uri $uri/ /index.html;
     }
