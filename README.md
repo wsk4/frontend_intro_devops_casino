@@ -107,7 +107,7 @@ kubectl get service frontend -o jsonpath='{.status.loadBalancer.ingress.hostname
 
 ## Autoescalado (HPA)
 
-El HPA escala entre **2 y 4 réplicas** con umbral de **50% CPU**.
+El HPA escala entre **2 y 6 réplicas** con umbral de **50% CPU**.
 
 \```bash
 kubectl get hpa frontend-hpa -w
