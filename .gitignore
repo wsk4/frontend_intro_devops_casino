@@ -1,11 +1,29 @@
-node_modules
-dist
-.angular
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Build Angular
+dist/
+.angular/cache/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Logs
 *.log
+npm-debug.log*
+
+# macOS
 .DS_Store
 
-# Claude Code (IA)
-.claude/
-.superpowers/
-CLAUDE.md
-docs/superpowers/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tests
+coverage/

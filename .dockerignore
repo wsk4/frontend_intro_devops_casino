@@ -1,7 +1,42 @@
-node_modules
-dist
+# Dependencias (se instalan en el builder)
+node_modules/
+
+# Build previo (se regenera en el builder)
+dist/
+.angular/
+
+# Variables de entorno
 .env
 .env.*
+!.env.example
+
+# Control de versiones
 .git
 .gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# Kubernetes
+k8s/
+
+# CI/CD
+.github/
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Docs
 README.md
+
+# Tests
+coverage/
+e2e/
