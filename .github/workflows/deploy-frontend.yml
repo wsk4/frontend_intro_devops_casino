@@ -96,8 +96,6 @@ jobs:
 
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
-          kubectl apply -f k8s/frontend-hpa.yaml
-
           kubectl rollout status deployment/frontend --timeout=120s
 
       # ── 8. Verificar despliegue ────────────────────────────────────────────
