@@ -98,15 +98,15 @@ jobs:
           kubectl apply -f k8s/frontend-service.yaml
           kubectl apply -f k8s/frontend-hpa.yaml
 
-          kubectl rollout status deployment/frontend --timeout=120s
+          kubectl rollout status deployment/casino-frontend --timeout=120s
 
       # ── 8. Verificar despliegue ────────────────────────────────────────────
       - name: 8. Verificar pods y URL pública
         run: |
           echo "── Pods ──────────────────────────────────"
-          kubectl get pods -l app=frontend
+          kubectl get pods -l app=casino-frontend
           echo "── HPA ───────────────────────────────────"
-          kubectl get hpa frontend-hpa
+          kubectl get hpa casino-frontend-hpa
           echo "── URL pública (LoadBalancer) ────────────"
           kubectl get service frontend \
             -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
