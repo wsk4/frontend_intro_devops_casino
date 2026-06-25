@@ -12,13 +12,16 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
     <header class="barra">
-      <a routerLink="/lobby" class="marca">♠ Casino Vidal ♦</a>
+      <a routerLink="/lobby" class="marca">♠ Casino DevOps ♦</a>
 
       <nav *ngIf="auth.autenticado()">
         <a routerLink="/lobby"     routerLinkActive="activo">Lobby</a>
         <a routerLink="/slots"     routerLinkActive="activo">Slots</a>
         <a routerLink="/roulette"  routerLinkActive="activo">Ruleta</a>
         <a routerLink="/blackjack" routerLinkActive="activo">Blackjack</a>
+        <a routerLink="/bonos"     routerLinkActive="activo">Bonos</a>
+        <a routerLink="/apuestas"  routerLinkActive="activo">Apuestas</a>
+        <a routerLink="/estadisticas" routerLinkActive="activo">Estadísticas</a>
         <a routerLink="/history"   routerLinkActive="activo">Historial</a>
       </nav>
 
@@ -49,8 +52,8 @@ import { AuthService } from '../../services/auth.service';
       backdrop-filter: blur(14px);
     }
     .marca {
-      font-family: 'Georgia', serif;
-      font-size: 17px; letter-spacing: 4px; text-transform: uppercase;
+      font-family: 'Playfair Display', Georgia, serif; font-weight: 800;
+      font-size: 19px; letter-spacing: 3px; text-transform: uppercase;
       background: linear-gradient(90deg, #b8902a, #f0d060, #d4af37, #f0d060, #b8902a);
       background-size: 300% 100%;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -106,8 +109,8 @@ export class HeaderComponent implements OnDestroy {
 
     effect(() => {
       const saldo = Number(this.auth.usuario()?.saldo ?? 0);
-      const prev = this.displaySaldo.val;
-      const dur = Math.min(0.8, Math.max(0.3, Math.abs(saldo - prev) / 5000));
+      const prev  = this.displaySaldo.val;
+      const dur   = Math.min(0.8, Math.max(0.3, Math.abs(saldo - prev) / 5000));
 
       this.tween?.kill();
       this.tween = ngZone.runOutsideAngular(() =>
