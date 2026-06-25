@@ -108,6 +108,6 @@ jobs:
           echo "── HPA ───────────────────────────────────"
           kubectl get hpa casino-frontend-hpa
           echo "── URL pública (LoadBalancer) ────────────"
-          kubectl get service frontend \
+          kubectl get service frontend-service \
             -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
           echo ""
