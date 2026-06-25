@@ -15,8 +15,6 @@ RUN npm run build
 # ── Etapa 2: runtime — nginx-unprivileged (no-root, puerto 8080) ─────────────
 FROM nginxinc/nginx-unprivileged:alpine AS runtime
 
-RUN rm -rf /usr/share/nginx/html/*
-
 COPY default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist/casino-frontend/browser/. /usr/share/nginx/html/
 
