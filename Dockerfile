@@ -1,4 +1,4 @@
-# ── Etapa 1: builder — compilar Angular ─────────────────────────────────────
+#Etapa 1: builder — compilar Angular 
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -12,7 +12,7 @@ RUN if [ -f package-lock.json ]; then \
 COPY . .
 RUN npm run build
 
-# ── Etapa 2: runtime — nginx-unprivileged (no-root, puerto 8080) ─────────────
+# Etapa 2: runtime — nginx-unprivileged (no-root, puerto 8080) 
 FROM nginxinc/nginx-unprivileged:alpine AS runtime
 
 COPY default.conf.template /etc/nginx/templates/default.conf.template
