@@ -14,16 +14,43 @@ env:
   EKS_CLUSTER:    ${{ secrets.EKS_CLUSTER }}
 
 jobs:
-  build-push-deploy:
-    name: Build → ECR → EKS
+
+  # ── TEST ───────────────────────────────────────────────────────────────────
+  # Si los tests fallan, build/push/deploy quedan skipped automáticamente.
+  test:
+    name: 🧪 Test — Karma + ChromeHeadless
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────────────
       - name: 1. Checkout del código
         uses: actions/checkout@v4
 
-      # ── 2. Credenciales AWS (temporales AWS Academy) ───────────────────────
+      - name: 2. Instalar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 3. Instalar dependencias
+        run: npm ci
+
+      - name: 4. Ejecutar pruebas unitarias
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+  # ── BUILD ──────────────────────────────────────────────────────────────────
+  build:
+    name: 🔨 Build — imagen Docker
+    runs-on: ubuntu-latest
+    needs: test
+
+    outputs:
+      tags:  ${{ steps.tags.outputs.tags }}
+      image: ${{ steps.tags.outputs.image }}
+
+    steps:
+      - name: 1. Checkout del código
+        uses: actions/checkout@v4
+
       - name: 2. Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,12 +59,10 @@ jobs:
           aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region:            ${{ secrets.AWS_REGION }}
 
-      # ── 3. Login a Amazon ECR ──────────────────────────────────────────────
       - name: 3. Login a Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ── 4. Calcular tags de imagen ─────────────────────────────────────────
       # Tres tags simultáneos: vX.Y.Z (si es tag), latest y SHA del commit
       - name: 4. Calcular tags de imagen
         id: tags
@@ -59,7 +84,6 @@ jobs:
           echo "image=${BASE}:${SHA}" >> $GITHUB_OUTPUT
           echo "Tags a publicar: ${TAGS}"
 
-      # ── 5. Build de la imagen Docker ───────────────────────────────────────
       - name: 5. Build de la imagen Docker
         run: |
           docker build \
@@ -68,17 +92,71 @@ jobs:
             --label "build-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             .
 
-      # ── 6. Push a Amazon ECR (todos los tags) ─────────────────────────────
-      - name: 6. Push a Amazon ECR
+      - name: 6. Exportar imagen como artefacto
+        run: docker save ${{ steps.tags.outputs.image }} | gzip > frontend-image.tar.gz
+
+      - name: 7. Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-image
+          path: frontend-image.tar.gz
+          retention-days: 1
+
+  # ── PUSH ───────────────────────────────────────────────────────────────────
+  push:
+    name: 📦 Push — Amazon ECR
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 1. Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: 2. Login a Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 3. Descargar artefacto de imagen
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-image
+
+      - name: 4. Cargar imagen en Docker
+        run: docker load < frontend-image.tar.gz
+
+      # Lógica de push idéntica al original (itera sobre todos los tags)
+      - name: 5. Push a Amazon ECR (todos los tags)
         run: |
-          IFS=',' read -ra TAG_LIST <<< "${{ steps.tags.outputs.tags }}"
+          IFS=',' read -ra TAG_LIST <<< "${{ needs.build.outputs.tags }}"
           for TAG in "${TAG_LIST[@]}"; do
-            docker tag ${{ steps.tags.outputs.image }} "${TAG}"
+            docker tag ${{ needs.build.outputs.image }} "${TAG}"
             docker push "${TAG}"
           done
 
-      # ── 7. Actualizar kubeconfig y desplegar en EKS ────────────────────────
-      - name: 7. Desplegar en EKS
+  # ── DEPLOY ─────────────────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy — EKS
+    runs-on: ubuntu-latest
+    needs: push
+
+    steps:
+      - name: 1. Checkout del código
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      # Lógica de deploy idéntica al original
+      - name: 3. Actualizar kubeconfig y desplegar en EKS
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
@@ -100,8 +178,7 @@ jobs:
 
           kubectl rollout status deployment/casino-frontend --timeout=120s
 
-      # ── 8. Verificar despliegue ────────────────────────────────────────────
-      - name: 8. Verificar pods y URL pública
+      - name: 4. Verificar pods y URL pública
         run: |
           echo "── Pods ──────────────────────────────────"
           kubectl get pods -l app=casino-frontend
